@@ -70,8 +70,9 @@ on init
 
     # Set permissions for persist partition
     mkdir /persist 0771 system system
-    # Set permissions for persist partition
-    mkdir /persist 0771 system system
+
+    # Set permissions for drm partition
+    mkdir /persist-lg 0771 system system
 
     # See storage config details at http://source.android.com/devices/tech/storage/
     mkdir /mnt/shell/emulated 0700 shell shell
@@ -80,13 +81,13 @@ on init
     mkdir /mnt/media_rw/sdcard1 0700 media_rw media_rw
     mkdir /storage/sdcard1 0700 root root
 
-    mkdir /mnt/media_rw/usbdisk 0700 media_rw media_rw
-    mkdir /storage/usbdisk 0700 root root
+    mkdir /mnt/media_rw/usbdisk0 0700 media_rw media_rw
+    mkdir /storage/usbdisk0 0700 root root
 
     export EXTERNAL_STORAGE /storage/emulated/legacy
     export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
     export EMULATED_STORAGE_TARGET /storage/emulated
-    export SECONDARY_STORAGE /storage/sdcard1:/storage/usbdisk
+    export SECONDARY_STORAGE /storage/sdcard1:/storage/usbdisk0
 
     # Support legacy paths
     symlink /storage/emulated/legacy /sdcard
@@ -95,8 +96,8 @@ on init
     symlink /mnt/shell/emulated/0 /storage/emulated/legacy
     symlink /storage/sdcard1 /external_sd
     symlink /storage/sdcard1 /mnt/external_sd
-    symlink /storage/usbdisk /usbdisk
-    symlink /storage/usbdisk /mnt/usbdisk
+    symlink /storage/usbdisk0 /usbdisk0
+    symlink /storage/usbdisk0 /mnt/usbdisk0
 
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
@@ -412,8 +413,10 @@ on post-fs
 
     chown system carrier /carrier
     chmod 0771 /carrier
-    #restorecon carrier partition.
+
+    # restorecon carrier partition
     restorecon_recursive /carrier
+    
     # We restorecon /preload in case preload folder has been reset.
     restorecon_recursive /preload
 
@@ -935,12 +938,12 @@ service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emul
     class late_start
 
 # fusewrapped external sdcard daemon running as media_rw (1023)
-service fuse_sdcard1 /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/sdcard1 /storage/sdcard1
+service fuse_sdcard1 /system/bin/sdcard -u 1023 -g 1023 -d /mnt/media_rw/sdcard1 /storage/sdcard1
     class late_start
     disabled
 
 # fusewrapped external sdcard daemon running as media_rw (1023)
-service fuse_usbdisk /system/bin/sdcard -u 1023 -g 1023 -d /mnt/media_rw/usbdisk /storage/usbdisk
+service fuse_usbdisk /system/bin/sdcard -u 1023 -g 1023 -d /mnt/media_rw/usbdisk0 /storage/usbdisk0
     class late_start
     disabled
 
@@ -1203,11 +1206,18 @@ service zchgd_offmode /system/bin/zchgd -pseudooffmode -autostop -poffmodewarn
     group root graphics
     disabled
 
-service bdaddr_loader /system/bin/bdaddr_loader
+service conn_init /system/bin/hwaddrs
+    class core
     user root
-    group bluetooth net_bt_admin misc net_bt_stack
-    disabled
+    group system wifi
     oneshot
+
+# Running hwaddrs under init is enforcing 0600, we need more
+on property:init.svc.conn_init=stopped
+    chmod 644 /data/misc/wifi/config
+    chown system wifi /data/misc/wifi/config
+    chmod 644 /data/misc/bdaddr
+    chown bluetooth bluetooth /data/misc/bdaddr
 
 on property:persist.service.criticaltemp=1
    write /sys/kernel/debug/spmi/spmi-0/address 0x00867

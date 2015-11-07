@@ -46,7 +46,7 @@ TARGET_NO_BOOTLOADER := true
 TARGET_USES_C2D_COMPOSITION := true
 
 # Kernel
-BOARD_CUSTOM_BOOTIMG_MK := $(COMMON_PATH)/mkbootimg.mk
+BOARD_DTBTOOL_ARGS := -2
 BOARD_KERNEL_CMDLINE := console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom user_debug=31 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 boot_cpus=0-5
 BOARD_KERNEL_BASE := 0x00078000
 BOARD_KERNEL_PAGESIZE := 4096
@@ -159,6 +159,8 @@ BOARD_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy
 
 BOARD_SEPOLICY_UNION += \
     device.te \
+    drmserver.te \
+    file.te \
     file_contexts \
     genfs_contexts \
     init-shell.te \
@@ -168,9 +170,11 @@ BOARD_SEPOLICY_UNION += \
     property.te \
     property_contexts \
     qmuxd.te \
+    qseecomd.te \
     rild.te \
     sensors.te \
     servicemanager.te \
+    system-server.te \
     time-daemon.te \
     thermal-engine.te \
     usb-uicc-daemon.te \
