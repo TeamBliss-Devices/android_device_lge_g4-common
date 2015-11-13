@@ -306,4 +306,11 @@
         <item>lte:4094,87380,2560000,4096,16384,1220608</item>
     </string-array>
 
+ 
+    <!-- Doze mode -->
+    <string name="config_dozeComponent">com.android.systemui/com.android.systemui.doze.DozeService</string>
+    <integer name="config_screenBrightnessDoze">15</integer>
+    <bool name="config_dozeAfterScreenOff">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+
 </resources>
